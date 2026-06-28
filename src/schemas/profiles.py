@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, field_validator, computed_field
+from pydantic import BaseModel, field_validator
 from database.models.accounts import GenderEnum
 from validation import (
     validate_name,
