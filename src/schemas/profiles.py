@@ -1,10 +1,11 @@
 from datetime import date
-from pydantic import BaseModel, field_validator
+
+from pydantic import BaseModel, field_validator, computed_field
 from database.models.accounts import GenderEnum
 from validation import (
     validate_name,
     validate_gender,
-    validate_birth_date,
+    validate_birth_date
 )
 
 
@@ -20,19 +21,25 @@ class ProfileCreateSchema(BaseModel):
 
     @field_validator("first_name")
     @classmethod
-    def check_first_name(cls, v):
-        validate_name(v)
+    def check_first_name(cls, first_name):
+        validate_name(first_name)
 
-        return v.lower()
+        return first_name.lower()
 
     @field_validator("last_name")
     @classmethod
-    def check_last_name(cls, v):
-        validate_name(v)
-        return v.lower()
+    def check_last_name(cls, last_name):
+        validate_name(last_name)
+        return last_name.lower()
+
+    @field_validator("gender")
+    @classmethod
+    def check_gender(cls, gender):
+        validate_gender(gender)
+        return gender
 
     @field_validator("date_of_birth")
     @classmethod
-    def check_birth_date(cls, v):
-        validate_birth_date(v)
-        return v
+    def check_birth_date(cls, date_of_birth):
+        validate_birth_date(date_of_birth)
+        return date_of_birth

@@ -10,6 +10,7 @@ from security.http import get_token
 from storages import S3StorageInterface
 from validation.profile import validate_image
 
+
 router = APIRouter()
 
 
@@ -76,28 +77,38 @@ async def create_user_profile(
             validate_image(avatar)
         except ValueError as e:
             raise HTTPException(status_code=422, detail=str(e))
-    avatar_url = None
-    if avatar:
-        try:
-            avatar_filename = f"avatars/{user_id}_avatar.jpg"
-            content = await avatar.read()
-            await s3_client.upload_file(avatar_filename, content)
-            avatar_url = await s3_client.get_file_url(avatar_filename)
-        except Exception as e:
-            print(f"Error here {e}")
-            raise HTTPException(
-                status_code=500, detail="Failed to upload avatar. Please try again later."
-            )
-    new_profile = UserProfileModel(
-        first_name=first_name.lower(),
-        last_name=last_name.lower(),
-        gender=GenderEnum[gender.upper()],
-        date_of_birth=birth_date,
-        info=info,
-        avatar=avatar_url,
-        user_id=user_id,
-    )
-    db.add(new_profile)
-    await db.commit()
-    await db.refresh(new_profile)
-    return ProfileCreateSchema.model_validate(new_profile)
+        avatar_url_for_response = None
+        avatar_key_for_db = None
+        if avatar:
+            try:
+                avatar_filename = f"avatars/{user_id}_avatar.jpg"
+                content = await avatar.read()
+                await s3_client.upload_file(avatar_filename, content)
+                avatar_key_for_db = avatar_filename
+                avatar_url_for_response = await s3_client.get_file_url(avatar_filename)
+            except Exception:
+                raise HTTPException(
+                    status_code=500, detail="Failed to upload avatar. Please try again later."
+                )
+        new_profile = UserProfileModel(
+            first_name=first_name.lower(),
+            last_name=last_name.lower(),
+            gender=GenderEnum[gender.upper()],
+            date_of_birth=birth_date,
+            info=info,
+            avatar=avatar_key_for_db,
+            user_id=user_id,
+        )
+        db.add(new_profile)
+        await db.commit()
+        await db.refresh(new_profile)
+        return ProfileCreateSchema(
+            id=new_profile.id,
+            user_id=new_profile.user_id,
+            first_name=new_profile.first_name,
+            last_name=new_profile.last_name,
+            gender=new_profile.gender,
+            date_of_birth=new_profile.date_of_birth,
+            info=new_profile.info,
+            avatar=avatar_url_for_response
+        )
