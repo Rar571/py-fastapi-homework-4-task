@@ -10,42 +10,29 @@ from validation import (
 
 class ProfileCreateSchema(BaseModel):
     first_name: str
+    last_name: str
+    gender: GenderEnum
+    date_of_birth: date
+    info: str
+    avatar: str | None = None
+    user_id: int | None = None
+    model_config = {"from_attributes": True}
 
     @field_validator("first_name")
     @classmethod
-    def check_english_letters(cls, first_name: str):
-        validate_name(first_name)
-        return first_name
+    def check_first_name(cls, v):
+        validate_name(v)
 
-    last_name: str
+        return v.lower()
 
     @field_validator("last_name")
     @classmethod
-    def check_english_letters_31(cls, last_name: str):
-        validate_name(last_name)
-        return last_name
-
-    gender: GenderEnum
-
-    @field_validator("gender")
-    @classmethod
-    def check_gender(cls, gender: str):
-        validate_gender(gender)
-        return gender
-
-    date_of_birth: date
+    def check_last_name(cls, v):
+        validate_name(v)
+        return v.lower()
 
     @field_validator("date_of_birth")
     @classmethod
-    def check_date_of_birth(cls, date_of_birth: date):
-        validate_birth_date(date_of_birth)
-        return date_of_birth
-
-    info: str
-
-    @field_validator("info")
-    @classmethod
-    def check_info(cls, info: str):
-        if not info or not info.strip():
-            raise ValueError("Info can not be empty or consist only of spaces")
-        return info
+    def check_birth_date(cls, v):
+        validate_birth_date(v)
+        return v
